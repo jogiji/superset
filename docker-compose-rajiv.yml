@@ -26,48 +26,13 @@ services:
       - db
       - redis
     environment:
-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
-      - POSTGRES_DB=${POSTGRES_DB:-superset}
-      - POSTGRES_USER=${POSTGRES_USER:-superset}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
-      - POSTGRES_HOST=db
-      - REDIS_HOST=redis
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-superset}:${POSTGRES_PASSWORD:-superset}@db/${POSTGRES_DB:-superset}
+      REDIS_URL: redis://redis:6379/0
     volumes:
       - superset_home:/app/superset_home
-
-  superset-worker:
-    image: apache/superset:latest
-    restart: always
-    depends_on:
-      - db
-      - redis
-    command: ["/app/docker/docker-bootstrap.sh", "worker"]
-    environment:
-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
-      - POSTGRES_DB=${POSTGRES_DB:-superset}
-      - POSTGRES_USER=${POSTGRES_USER:-superset}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
-      - POSTGRES_HOST=db
-      - REDIS_HOST=redis
-    volumes:
-      - superset_home:/app/superset_home
-
-  superset-worker-beat:
-    image: apache/superset:latest
-    restart: always
-    depends_on:
-      - db
-      - redis
-    command: ["/app/docker/docker-bootstrap.sh", "beat"]
-    environment:
-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
-      - POSTGRES_DB=${POSTGRES_DB:-superset}
-      - POSTGRES_USER=${POSTGRES_USER:-superset}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
-      - POSTGRES_HOST=db
-      - REDIS_HOST=redis
-    volumes:
-      - superset_home:/app/superset_home
+    entrypoint: ["/usr/bin/docker-entrypoint.sh"]
+    command: ["flask", "run", "-p", "8088", "--host=0.0.0.0"]
 
 volumes:
   superset_home:
