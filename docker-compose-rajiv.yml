@@ -31,8 +31,7 @@ services:
       REDIS_URL: redis://redis:6379/0
     volumes:
       - superset_home:/app/superset_home
-    entrypoint: ["/usr/bin/docker-entrypoint.sh"]
-    command: ["flask", "run", "-p", "8088", "--host=0.0.0.0"]
+    command: ["superset", "run", "-p", "8088", "--host=0.0.0.0", "--reload"]
 
 volumes:
   superset_home:
