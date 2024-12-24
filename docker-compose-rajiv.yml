@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7
+    restart: always
+    volumes:
+      - redis:/data
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-superset}
+      - POSTGRES_USER=${POSTGRES_USER:-superset}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
+    volumes:
+      - db_home:/var/lib/postgresql/data
+
+  superset:
+    image: apache/superset:latest
+    restart: always
+    ports:
+      - "${PORT:-8088}:8088"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - POSTGRES_DB=${POSTGRES_DB:-superset}
+      - POSTGRES_USER=${POSTGRES_USER:-superset}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - superset_home:/app/superset_home
+
+  superset-worker:
+    image: apache/superset:latest
+    restart: always
+    depends_on:
+      - db
+      - redis
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - POSTGRES_DB=${POSTGRES_DB:-superset}
+      - POSTGRES_USER=${POSTGRES_USER:-superset}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - superset_home:/app/superset_home
+
+  superset-worker-beat:
+    image: apache/superset:latest
+    restart: always
+    depends_on:
+      - db
+      - redis
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - POSTGRES_DB=${POSTGRES_DB:-superset}
+      - POSTGRES_USER=${POSTGRES_USER:-superset}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-superset}
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - superset_home:/app/superset_home
+
+volumes:
+  superset_home:
+  db_home:
+  redis:
